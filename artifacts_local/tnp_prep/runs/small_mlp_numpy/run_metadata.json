@@ -1,0 +1,30 @@
+{
+  "argv": [
+    "train_tnp_mlp_numpy.py"
+  ],
+  "best_val_loss_std": 0.23723231469867775,
+  "categorical_features": [
+    "pickup_community_area",
+    "dropoff_community_area",
+    "shared_trip_authorized"
+  ],
+  "epochs_run": 167,
+  "hidden_dim": 32,
+  "input_dim": 161,
+  "learning_rate": 0.01,
+  "model_type": "small_numpy_mlp_regressor",
+  "numeric_features": [
+    "trip_miles",
+    "start_hour",
+    "start_day_of_week",
+    "start_month",
+    "trips_pooled"
+  ],
+  "optimizer": "adam",
+  "prep_dir": "/sessions/dazzling-laughing-cannon/mnt/cs6320/ut-cs6320-assignment-03/artifacts/tnp_prep",
+  "seed": 6320,
+  "target": "target_trip_seconds",
+  "target_mean_seconds": 951.8915,
+  "target_std_seconds": 644.3920164732153,
+  "trainable_parameters": 5217
+}

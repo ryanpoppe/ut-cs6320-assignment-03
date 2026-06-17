@@ -1,0 +1,25 @@
+{
+  "categorical_features": [
+    "pickup_community_area",
+    "dropoff_community_area",
+    "shared_trip_authorized"
+  ],
+  "dataset": "/sessions/dazzling-laughing-cannon/mnt/cs6320/ut-cs6320-assignment-03/datasets/student_visible/week03_tnp_trips/week03_tnp_trip_duration.csv",
+  "n_total": 30000,
+  "n_train": 24000,
+  "n_validation": 6000,
+  "numeric_features": [
+    "trip_miles",
+    "start_hour",
+    "start_day_of_week",
+    "start_month",
+    "trips_pooled"
+  ],
+  "seed": 6320,
+  "target": "target_trip_seconds",
+  "target_max_seconds": 7123.0,
+  "target_mean_seconds": 951.1419666666667,
+  "target_min_seconds": 61.0,
+  "target_std_seconds": 645.5574495164261,
+  "val_fraction": 0.2
+}

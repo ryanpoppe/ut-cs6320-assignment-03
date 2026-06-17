@@ -1,0 +1,30 @@
+{
+  "argv": [
+    "train_tnp_mlp.py"
+  ],
+  "best_val_loss_std": 0.23077400028705597,
+  "categorical_features": [
+    "pickup_community_area",
+    "dropoff_community_area",
+    "shared_trip_authorized"
+  ],
+  "epochs_run": 236,
+  "hidden_dim": 32,
+  "input_dim": 161,
+  "learning_rate": 0.01,
+  "model_type": "small_pytorch_mlp_regressor",
+  "numeric_features": [
+    "trip_miles",
+    "start_hour",
+    "start_day_of_week",
+    "start_month",
+    "trips_pooled"
+  ],
+  "optimizer": "adam",
+  "prep_dir": "/uufs/chpc.utah.edu/common/home/u6076642/ut-cs6320-assignment-03/artifacts/tnp_prep",
+  "seed": 6320,
+  "target": "target_trip_seconds",
+  "target_mean_seconds": 951.8915,
+  "target_std_seconds": 644.3920164732153,
+  "trainable_parameters": 5217
+}

@@ -1,0 +1,22 @@
+{
+  "alpha": 1.0,
+  "argv": [
+    "train_baseline.py"
+  ],
+  "categorical_features": [
+    "pickup_community_area",
+    "dropoff_community_area",
+    "shared_trip_authorized"
+  ],
+  "input_dim": 161,
+  "model_type": "ridge_regression",
+  "numeric_features": [
+    "trip_miles",
+    "start_hour",
+    "start_day_of_week",
+    "start_month",
+    "trips_pooled"
+  ],
+  "prep_dir": "/uufs/chpc.utah.edu/common/home/u6076642/ut-cs6320-assignment-03/artifacts/tnp_prep",
+  "target": "target_trip_seconds"
+}

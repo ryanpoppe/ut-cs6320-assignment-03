@@ -9,10 +9,11 @@ I built a small neural network and an explicit, script-based training loop that 
 Providers dataset. The loop exposes every mechanical step — forward pass, MSE loss,
 gradient zeroing, backpropagation, parameter update, and per-epoch validation tracking — so
 the point of the exercise is visible rather than hidden behind a high-level `fit()` call. On
-a held-out validation split the network reaches **MAE ≈ 209 seconds (R² ≈ 0.77)**, beating a
+a held-out validation split the network reaches **MAE ≈ 202 seconds (R² ≈ 0.77)**, beating a
 mean-predictor floor (479 s) and a ridge-regression baseline (244 s) trained on the identical
-preprocessed features. The whole pipeline runs from scripts and is submitted to CHPC via
-`chpc/run_tnp.slurm`; a captured run log and saved metrics/plot are included as evidence.
+preprocessed features. The whole pipeline runs from scripts and was executed on CHPC (SLURM
+job 1450277, GPU node grn077); the captured job log (`slurm-tnp-1450277.out`), saved metrics,
+and training-curve plot are included as evidence.
 
 ## Dataset and task
 
@@ -74,8 +75,8 @@ labeled exactly like this:
    accumulates gradients otherwise).
 4. **Backpropagation** — `loss.backward()` runs autograd, filling every parameter's `.grad`
    with `∂L/∂parameter`. I log the global gradient L2 norm each epoch as direct evidence that
-   backprop produced gradients (it falls from ≈0.97 early to ≈0.015 near convergence, i.e. the
-   model approaches a flat region of the loss).
+   backprop produced gradients (it falls from ≈0.53 at epoch 1 toward ≈0.01–0.09 as the model
+   nears a flat region of the loss).
 5. **Parameter update** — `optimizer.step()` steps each parameter downhill along its gradient
    (or the manual SGD update does it by hand).
 
@@ -87,28 +88,30 @@ To make the backpropagation concrete, I also wrote a dependency-free **NumPy twi
 (`train_tnp_mlp_numpy.py`) that implements the *same* network and loop but codes the backward
 pass by hand — the chain rule layer by layer (`d_out → dW2, db2 → d_a1 → d_z1 (ReLU mask) →
 dW1, db1`). This is exactly the calculation `loss.backward()` automates, written out. See the
-reproducibility note below for why both implementations exist.
+reproducibility note below.
 
 ## Validation tracking — training behavior
 
-Per-epoch behavior (NumPy-twin run; standardized loss and MAE in seconds):
+Per-epoch behavior (CHPC PyTorch run; standardized loss and MAE in seconds):
 
 | Epoch | Train loss | Val loss | Grad norm | Train MAE (s) | Val MAE (s) |
 |------:|-----------:|---------:|----------:|--------------:|------------:|
-| 1     | 1.0032     | 0.9331   | 0.972     | 444.0         | 447.7       |
-| 10    | 0.4250     | 0.3926   | 0.628     | 272.5         | 275.4       |
-| 25    | 0.2894     | 0.2831   | 0.263     | 229.4         | 231.4       |
-| 50    | 0.2474     | 0.2593   | 0.085     | 213.3         | 219.8       |
-| 75    | 0.2254     | 0.2477   | 0.020     | 203.0         | 214.1       |
-| 100   | 0.2099     | 0.2419   | 0.018     | 195.8         | 211.2       |
-| 125   | 0.1966     | 0.2376   | 0.016     | 189.1         | 208.8       |
-| **137 (best)** | **0.1917** | **0.2372** | **0.015** | **186.8** | **209.0** |
+| 1     | 0.9989     | 0.9560   | 0.530     | 465.9         | 471.7       |
+| 25    | 0.3081     | 0.2959   | 0.310     | 234.7         | 235.2       |
+| 50    | 0.2572     | 0.2625   | 0.088     | 217.0         | 220.8       |
+| 75    | 0.2360     | 0.2498   | 0.024     | 206.5         | 214.2       |
+| 100   | 0.2190     | 0.2392   | 0.019     | 197.6         | 208.0       |
+| 125   | 0.2067     | 0.2350   | 0.016     | 191.3         | 205.4       |
+| 150   | 0.1975     | 0.2329   | 0.013     | 186.4         | 204.2       |
+| 175   | 0.1897     | 0.2317   | 0.031     | 183.0         | 203.5       |
+| 200   | 0.1832     | 0.2312   | 0.088     | 178.8         | 202.1       |
+| **206 (best)** | **0.1817** | **0.2308** | **0.087** | **178.6** | **202.4** |
 
-Training ran 167 epochs and early-stopped, restoring epoch 137 (best validation loss). The
+Training ran 236 epochs and early-stopped, restoring epoch 206 (best validation loss). The
 training-curve plot is saved at
-`artifacts/tnp_prep/runs/small_mlp_numpy/training_curve.png` and shown conceptually by the
-table: a steep early drop (≈448 → ≈230 s by epoch 25), then a slow decline where train and
-validation separate slightly — mild overfitting — until validation flattens near 209 s.
+`artifacts/tnp_prep/runs/small_mlp_torch/training_curve.png`: a steep early drop
+(≈472 → ≈235 s by epoch 25), then a slow decline where train and validation separate slightly
+— mild overfitting — until validation flattens near 202 s.
 
 ## Results — does the network beat the baselines?
 
@@ -118,20 +121,20 @@ Validation split (6,000 rows), all on the identical preprocessing:
 |---|---:|---:|---:|
 | Mean predictor (floor) | 479.0 | 650.1 | −0.000 |
 | Ridge regression | 243.7 | 358.0 | 0.697 |
-| **Small neural network** | **209.0** | **313.9** | **0.767** |
+| **Small neural network** | **202.4** | **309.6** | **0.773** |
 
-(Network train metrics for reference: MAE 186.8 s, RMSE 281.9 s, R² 0.809.)
+(Network train metrics for reference: MAE 178.6 s, RMSE 274.4 s, R² 0.819.)
 
 ## Interpretation
 
 The loop behaves the way the lecture mechanics predict. The loss decreases monotonically on
 train, the gradient norm shrinks toward zero as the optimizer approaches a flat region, and
 the network clears both baselines: it cuts the mean-predictor error by more than half and
-improves on ridge by ≈35 s of MAE (≈14%). That gap is the part of the duration signal that is
+improves on ridge by ≈41 s of MAE (≈17%). That gap is the part of the duration signal that is
 genuinely **non-linear** in these features — plausibly interactions between distance, hour,
 and pickup/dropoff area — which a linear model cannot capture but one hidden layer can.
 
-The train/validation gap (187 s vs. 209 s) is mild, expected overfitting on a flexible model;
+The train/validation gap (179 s vs. 202 s) is mild, expected overfitting on a flexible model;
 early stopping is what keeps it in check, and is the reason validation tracking is part of the
 loop rather than an afterthought. Consistent with the assignment's scope, this is one small
 model, one random split, a modest epoch budget, and no hyperparameter search — the goal was to
@@ -142,33 +145,38 @@ a training diagnostic on a teaching subset, not evidence of a deployable ETA mod
 
 ## CHPC evidence
 
-- **Job script:** `chpc/run_tnp.slurm` — submit from the assignment-03 root with
+- **Job script:** `chpc/run_tnp.slurm` — submitted from the assignment-03 root with
   `sbatch chpc/run_tnp.slurm`. It reuses the Week 3 dc_energy template allocation
   (`account=larsenc`, `partition`/`qos=utucset-gpu-grn`, `gres=gpu:1`), builds a venv from
-  `requirements.txt`, and runs the pipeline. Captured stdout/stderr land in
-  `slurm-tnp-%j.out` / `.err` as the CHPC evidence.
+  `requirements.txt`, and runs the pipeline.
+- **Executed run:** SLURM **job 1450277** on GPU node **grn077** (Python 3.12.4, NVIDIA RTX PRO
+  6000 GPU), 2026-06-17. Captured stdout is **`slurm-tnp-1450277.out`** (stderr in
+  `slurm-tnp-1450277.err`) — the primary CHPC evidence.
 - **Command sequence** (also in the job script and README):
   `python prepare_tnp_data.py` → `python train_baseline.py` → `python train_tnp_mlp.py`.
-- **Captured local log:** `artifacts/run_logs/tnp_run.log` shows the full end-to-end run with
-  per-epoch output and final metrics.
-- **Saved outputs:** `artifacts/tnp_prep/manifest.json`, the prepared splits under
+- **Saved outputs (CHPC):** `artifacts/tnp_prep/manifest.json`, the prepared splits under
   `artifacts/tnp_prep/data/`, and per-model `metrics.json`, `metrics_summary.csv`,
-  `run_metadata.json`, the saved model, `training_history.json`, and `training_curve.png`
-  under `artifacts/tnp_prep/runs/`.
+  `run_metadata.json`, the saved model (`small_mlp.pt`), `training_history.json`, and
+  `training_curve.png` under `artifacts/tnp_prep/runs/small_mlp_torch/` (baselines under
+  `baseline_mean/` and `baseline_ridge/`).
 
-## Reproducibility note — two equivalent implementations
+## Reproducibility note — PyTorch on CHPC vs. the NumPy twin
 
-The **submitted training-loop implementation is `train_tnp_mlp.py` (PyTorch)**: it uses tensors
-and automatic differentiation, as the assignment asks, and runs on CHPC where PyTorch is
-available via `module load`. Because the environment I used to develop and run this offline did
-not have a PyTorch install, I generated the committed metrics, history, and plot with the
-**equivalent NumPy twin `train_tnp_mlp_numpy.py`**, which implements the identical architecture,
-target standardization, full-batch loop, optimizer, and early stopping, with the backward pass
-written out by hand. The two are mechanically equivalent — the NumPy version simply does
-manually what autograd does automatically — so the behavior and metrics above are
-representative of either. Both scripts write to parallel run directories
-(`runs/small_mlp_torch/` and `runs/small_mlp_numpy/`), so running the CHPC job reproduces the
-same artifacts from the PyTorch path.
+The submitted training-loop implementation is **`train_tnp_mlp.py` (PyTorch / autograd)**, and
+it is what produced the headline numbers above when run on CHPC (job 1450277). During offline
+development I did not have a PyTorch install, so I built an **equivalent NumPy twin**
+(`train_tnp_mlp_numpy.py`) that implements the identical architecture, target standardization,
+full-batch loop, optimizer, and early stopping, with the backward pass written out by hand —
+exactly what autograd computes automatically.
+
+The two agree closely, which is the point. The deterministic baselines are identical to many
+decimals (mean MAE 479.0 s, ridge MAE 243.7 s in both runs). The networks land in the same
+place: CHPC PyTorch reaches **val MAE 202.4 s (R² 0.773)** and the laptop NumPy twin reaches
+**val MAE 209.0 s (R² 0.767)**. The ≈7-second difference comes from PyTorch's default weight
+initialization and Adam details versus the NumPy He-initialization, which send the optimizer
+down slightly different paths (the PyTorch run trained 236 epochs vs. 167 and reached a marginally
+lower best validation loss). The CHPC PyTorch outputs live under `artifacts/`; the NumPy-twin
+outputs from the laptop run are kept under `artifacts_local/` for comparison.
 
 ## Sources
 

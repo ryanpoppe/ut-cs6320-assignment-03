@@ -1,0 +1,41 @@
+############################################################
+# Job:        1450277
+# Host:       grn077
+# Submit dir: /uufs/chpc.utah.edu/common/home/u6076642/ut-cs6320-assignment-03
+# Date (UTC): 2026-06-17T17:28:50Z
+# CUDA dev:   0
+############################################################
+# python: Python 3.12.4
+GPU 0: NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition (UUID: GPU-acfc03a3-2ca3-b1ab-1695-d3276a3fc655)
+>>> STEP 1: prepare_tnp_data.py
+Prepared splits written to: /uufs/chpc.utah.edu/common/home/u6076642/ut-cs6320-assignment-03/artifacts/tnp_prep
+  train      : 24,000 rows
+  validation : 6,000 rows
+  target 'target_trip_seconds': mean=951.1s min=61s max=7123s
+>>> STEP 2: train_baseline.py  (mean predictor + ridge)
+Baselines (validation MAE in seconds):
+  mean predictor : MAE=479.0  RMSE=650.1  R2=-0.000
+  ridge          : MAE=243.7  RMSE=358.0  R2=0.697
+>>> STEP 3: train_tnp_mlp.py   (explicit training loop)
+Model: SmallMLP(input_dim=161, hidden_dim=32) -> 5,217 trainable parameters
+Optimizer: adam (lr=0.01) | loss: MSE on standardized target
+Training full-batch for up to 400 epochs (patience=30)
+
+epoch    1 | train_loss 0.9989 | val_loss 0.9560 | grad_norm   0.530 | train_MAE  465.9s | val_MAE  471.7s
+epoch   25 | train_loss 0.3081 | val_loss 0.2959 | grad_norm   0.310 | train_MAE  234.7s | val_MAE  235.2s
+epoch   50 | train_loss 0.2572 | val_loss 0.2625 | grad_norm   0.088 | train_MAE  217.0s | val_MAE  220.8s
+epoch   75 | train_loss 0.2360 | val_loss 0.2498 | grad_norm   0.024 | train_MAE  206.5s | val_MAE  214.2s
+epoch  100 | train_loss 0.2190 | val_loss 0.2392 | grad_norm   0.019 | train_MAE  197.6s | val_MAE  208.0s
+epoch  125 | train_loss 0.2067 | val_loss 0.2350 | grad_norm   0.016 | train_MAE  191.3s | val_MAE  205.4s
+epoch  150 | train_loss 0.1975 | val_loss 0.2329 | grad_norm   0.013 | train_MAE  186.4s | val_MAE  204.2s
+epoch  175 | train_loss 0.1897 | val_loss 0.2317 | grad_norm   0.031 | train_MAE  183.0s | val_MAE  203.5s
+epoch  200 | train_loss 0.1832 | val_loss 0.2312 | grad_norm   0.088 | train_MAE  178.8s | val_MAE  202.1s
+epoch  225 | train_loss 0.1775 | val_loss 0.2316 | grad_norm   0.089 | train_MAE  176.3s | val_MAE  202.0s
+
+Early stopping at epoch 236 (no val improvement for 30 epochs).
+Saved training-curve plot to: /uufs/chpc.utah.edu/common/home/u6076642/ut-cs6320-assignment-03/artifacts/tnp_prep/runs/small_mlp_torch/training_curve.png
+
+Saved neural-network artifacts to: /uufs/chpc.utah.edu/common/home/u6076642/ut-cs6320-assignment-03/artifacts/tnp_prep/runs/small_mlp_torch
+  train       MAE= 178.6s  RMSE= 274.4s  R2=0.819
+  validation  MAE= 202.4s  RMSE= 309.6s  R2=0.773
+>>> DONE. Metrics, history, model, and plot under artifacts/tnp_prep/runs/
